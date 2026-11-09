@@ -5,9 +5,8 @@
 ![Estado](https://img.shields.io/badge/Status-In_development-yellow)
 [![Licencia](https://img.shields.io/badge/License-GPLv3-blue)](LICENSE)
 ![Version](https://img.shields.io/badge/Version-null-darkgreen)
+![Plataformas](https://img.shields.io/badge/Platform-Wiindows_|_Linux-lightgray)
 [![Instagram](https://img.shields.io/badge/Instagram-DevsilonV-darkmagenta)](https://www.instagram.com/devsilonv)
-![Discord](https://img.shields.io/badge/Discord-null-red)
-
 
 ## Content
 
