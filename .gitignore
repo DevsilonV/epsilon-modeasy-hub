@@ -34,3 +34,8 @@ Thumbs.db
 # Other
 info.md
 docs/*
+# .NET
+bin/
+obj/
+*.user
+TestResults/

@@ -11,6 +11,7 @@
 ## Content
 
 - [Description](#description)
+- [Structure](#structure)
 - [Details](#details)
 - [Instalation](#instalation)
 - [Usage](#usage)
@@ -21,6 +22,23 @@
 ## Description
 
 > TODO
+
+## Structure
+
+```
+epsilon-modeasy-hub
+├── src/
+│   ├── core/    → no AI: game selection, safe zip extraction, install, backups, rollback...
+│   ├── agent/   → AI: tools wrapping core, agent loop, human confirmation gate (TBD)
+│   └── gui/     → user interface (Avalonia UI)
+├── tests/
+│   ├── core/
+│   ├── gui/
+│   └── agent/
+├── LICENSE
+├── .gitignore
+└── README.md
+```
 
 ## Details
 
