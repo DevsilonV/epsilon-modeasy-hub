@@ -5,7 +5,11 @@ namespace ModEasyHub.Core.Games;
 
 public sealed class GameLibrary(IGamesStore store, IFileSystem fileSystem)
 {
+    private static readonly StringComparison PathComparison =
+        OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
     private readonly List<Game> _games = [];
+    private bool _loadFailed;
 
     /// <summary>
     /// Carga la lista desde el almacén. Se puede volver a llamar (por ejemplo, para recargar tras un fallo).
@@ -21,11 +25,13 @@ public sealed class GameLibrary(IGamesStore store, IFileSystem fileSystem)
         catch (GamesStoreException)
         {
             _games.Clear();
+            _loadFailed = true;
             return LoadOutcome.Failed;
         }
 
         _games.Clear();
         _games.AddRange(result.Games);
+        _loadFailed = false;
         return result.RecoveredFromCorruption ? LoadOutcome.RecoveredFromCorruption : LoadOutcome.Loaded;
     }
 
@@ -34,4 +40,40 @@ public sealed class GameLibrary(IGamesStore store, IFileSystem fileSystem)
         _games
             .Select(g => new GameItem(g, fileSystem.FileExists(g.ExePath) ? GameStatus.Found : GameStatus.NotFound))
             .ToList();
+
+    /// <summary>
+    /// Añade un juego a partir de la ruta de su .exe y guarda la lista.
+    /// Se rechaza si la última carga falló: guardar sobrescribiría un archivo que no se pudo leer.
+    /// Orden de validación: la primera comprobación que falla decide el error.
+    /// </summary>
+    public OperationResult Add(string exePath)
+    {
+        if (_loadFailed)
+            return OperationResult.Failure(GameLibraryError.LoadFailed);
+
+        if (string.IsNullOrWhiteSpace(exePath)
+            || !string.Equals(Path.GetExtension(exePath), ".exe", StringComparison.OrdinalIgnoreCase))
+            return OperationResult.Failure(GameLibraryError.NotExeFile);
+
+        string fullPath;
+        try
+        {
+            fullPath = Path.GetFullPath(exePath);
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return OperationResult.Failure(GameLibraryError.NotExeFile);
+        }
+
+        if (!fileSystem.FileExists(fullPath))
+            return OperationResult.Failure(GameLibraryError.FileNotFound);
+
+        if (_games.Any(g => string.Equals(g.ExePath, fullPath, PathComparison)))
+            return OperationResult.Failure(GameLibraryError.AlreadyAdded);
+
+        var game = Game.FromExePath(fullPath);
+        _games.Add(game);
+        store.Save(_games);
+        return OperationResult.Success(game);
+    }
 }

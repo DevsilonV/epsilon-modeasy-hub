@@ -6,5 +6,6 @@ public enum GameLibraryError
     FileNotFound,
     AlreadyAdded,
     GameNotInList,
-    SaveFailed
+    SaveFailed,
+    LoadFailed
 }
