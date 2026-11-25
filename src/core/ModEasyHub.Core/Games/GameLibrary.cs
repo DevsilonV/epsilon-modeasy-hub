@@ -73,7 +73,41 @@ public sealed class GameLibrary(IGamesStore store, IFileSystem fileSystem)
 
         var game = Game.FromExePath(fullPath);
         _games.Add(game);
-        store.Save(_games);
-        return OperationResult.Success(game);
+        return Persist(game);
+    }
+
+    /// <summary>
+    /// Quita un juego de la lista y guarda. Solo toca la lista de la app: nunca archivos del juego.
+    /// Se rechaza si la última carga falló (mismo motivo que en Add).
+    /// </summary>
+    public OperationResult Remove(Guid id)
+    {
+        if (_loadFailed)
+            return OperationResult.Failure(GameLibraryError.LoadFailed);
+
+        var game = _games.FirstOrDefault(g => g.Id == id);
+        if (game is null)
+            return OperationResult.Failure(GameLibraryError.GameNotInList);
+
+        _games.Remove(game);
+        return Persist(game);
+    }
+
+    /// <summary>
+    /// Guarda la lista completa. Si falla, el cambio se mantiene en memoria y se devuelve SaveFailed
+    /// con el juego afectado; la siguiente operación vuelve a intentar guardar la lista entera.
+    /// </summary>
+    private OperationResult Persist(Game affected)
+    {
+        try
+        {
+            store.Save(_games);
+        }
+        catch (GamesStoreException)
+        {
+            return OperationResult.Failure(GameLibraryError.SaveFailed, affected);
+        }
+
+        return OperationResult.Success(affected);
     }
 }
